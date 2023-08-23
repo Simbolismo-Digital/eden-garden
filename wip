@@ -6,3 +6,21 @@ erlang 26.0.2
 nodejs 20.5.1
 ```
 
+[create app](https://hexdocs.pm/phoenix/installation.html)
+
+```
+mix local.hex
+mix archive.install hex phx_new
+mix phx.new eden_garden
+mv eden_garden/* .
+mv -n eden_garden/* eden_garden/.formatter.exs eden_garden/.gitignore .
+echo "" >> README.md
+cat eden_garden/README.md >> README.md
+rm -rf eden_garden
+```
+
+Comentei a Repo application como não pretendo trabalhar com o banco de dados imediatamente
+lib/eden_garden/application.ex:14 # EdenGarden.Repo,
+
+Up :D
+mix phx.server
