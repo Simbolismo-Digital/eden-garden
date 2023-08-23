@@ -24,3 +24,12 @@ lib/eden_garden/application.ex:14 # EdenGarden.Repo,
 
 Up :D
 mix phx.server
+
+[create TreeServer](https://hexdocs.pm/elixir/1.12/GenServer.html)
+[vídeo que ajuda a fazer algo semelhante](https://www.youtube.com/watch?v=CJT8wPnmjTM)
+
+```
+{:ok, pid} = EdenGarden.TreeServer.start_link("laranja")
+EdenGarden.TreeServer.list(pid)
+EdenGarden.TreeServer.pop(pid)
+```
