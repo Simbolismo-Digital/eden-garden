@@ -1,8 +1,17 @@
 defmodule EdenGarden.TreeServer do
   use GenServer
 
+  @names %{
+    "maçã" => "#{__MODULE__}.Macieira",
+    "laranja" => "#{__MODULE__}.Laranjeira",
+    "banana" => "#{__MODULE__}.Bananeira"
+  }
+
+  # seconds
+  @period Enum.random(2..5)
+
   def start_link(fruit) do
-    GenServer.start_link(__MODULE__, [fruit], name: __MODULE__)
+    GenServer.start_link(__MODULE__, [fruit], name: {:global, @names[fruit]})
   end
 
   # Api
@@ -18,19 +27,19 @@ defmodule EdenGarden.TreeServer do
   # Callbacks
 
   def init([fruit]) do
-    IO.puts("Criamos uma árvore de #{fruit}s")
+    IO.puts("[Tree: #{fruit}] Criamos uma árvore de #{fruit}s")
     Process.send_after(self(), :periodic_task, random_interval())
     {:ok, %{fruit: fruit, load: []}}
   end
 
-  def handle_call(:pop, _from, %{load: load} = state) do
+  def handle_call(:pop, _from, %{fruit: fruit, load: load} = state) do
     case load do
       [] ->
-        IO.puts("Sem frutas...")
-        {:reply, nil, []}
+        IO.puts("[Tree: #{fruit}] Sem frutas...")
+        {:reply, nil, state}
 
       [fruit | rest] ->
-        IO.puts("Fruta removida: #{fruit}")
+        IO.puts("[Tree: #{fruit}] Fruta coletada: #{fruit}")
         {:reply, fruit, %{state | load: rest}}
     end
   end
@@ -47,11 +56,11 @@ defmodule EdenGarden.TreeServer do
 
   defp handle_periodic_task(%{fruit: fruit, load: load} = state) do
     new_load = [fruit | load]
-    IO.puts("Nasceu uma nova '#{fruit}': #{inspect(new_load)}")
+    IO.puts("[Tree: #{fruit}] Nasceu uma nova '#{fruit}': #{inspect(new_load)}")
     %{state | load: new_load}
   end
 
   defp random_interval do
-    :timer.seconds(Enum.random(2..5))
+    :timer.seconds(@period)
   end
 end

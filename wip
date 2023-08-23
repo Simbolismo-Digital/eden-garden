@@ -33,3 +33,15 @@ mix phx.server
 EdenGarden.TreeServer.list(pid)
 EdenGarden.TreeServer.pop(pid)
 ```
+
+[name registration](https://hexdocs.pm/elixir/1.12/GenServer.html#module-name-registration)
+observação posterior: {:via, module, name} if the server is registered through an alternative registry - será útil com o [Horde.Registry](https://hexdocs.pm/horde/Horde.Registry.html)
+
+```
+iex --sname fruits -S mix phx.server
+iex --sname basket
+Node.connect(:"fruits@davi-dragon")
+Process.exit(:global.whereis_name("Elixir.EdenGarden.TreeServer.Macieira"), :shutdown)
+Process.exit(:global.whereis_name("Elixir.EdenGarden.TreeServer.Laranjeira"), :shutdown)
+Process.exit(:global.whereis_name("Elixir.EdenGarden.TreeServer.Bananeira"), :shutdown)
+```

@@ -8,6 +8,12 @@ defmodule EdenGarden.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      # Macieira
+      Supervisor.child_spec({EdenGarden.TreeServer, "maçã"}, id: Macieira),
+      # Laranjeira
+      Supervisor.child_spec({EdenGarden.TreeServer, "laranja"}, id: Laranjeira),
+      # Bananeira
+      Supervisor.child_spec({EdenGarden.TreeServer, "banana"}, id: Bananeira),
       # Start the Telemetry supervisor
       EdenGardenWeb.Telemetry,
       # Start the Ecto repository
