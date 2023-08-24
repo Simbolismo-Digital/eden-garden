@@ -55,3 +55,15 @@ EdenGarden.BasketServer.list(:global.whereis_name("Elixir.EdenGarden.BasketServe
 Process.exit(:global.whereis_name("Elixir.EdenGarden.BasketServer.Main"), :shutdown)
 Process.exit(:global.whereis_name("Elixir.EdenGarden.BasketServer.Backup"), :shutdown)
 ```
+
+[traping exit and graceful shutdown BasketServer](https://hexdocs.pm/elixir/1.12.3/Process.html#exit/2)
+
+Agora ao realizar shutdown da Basket Main, é possível verificar os logs de transferências da main para a backup: `Encerrando a cesta`
+Assim que a main retorna, o backup devolve o conteúdo.
+
+```
+iex --sname fruits -S mix phx.server
+iex --sname basket
+Node.connect(:"fruits@davi-dragon")
+Process.exit(:global.whereis_name("Elixir.EdenGarden.BasketServer.Main"), :shutdown)
+```

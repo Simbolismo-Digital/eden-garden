@@ -15,6 +15,19 @@ defmodule EdenGarden.BasketServer do
 
   # Api
 
+  def is_online(name) do
+    :global.registered_names()
+    |> Enum.filter(&is_bitstring/1)
+    |> Enum.filter(&String.contains?(&1, name))
+    |> length()
+    |> Kernel.>=(1)
+  end
+
+  def transfer(pid, transered, role) do
+    IO.puts("[Basket: #{role}] Transferindo #{length(transered)} frutas para #{inspect(pid)}")
+    GenServer.call(pid, {:transfer, transered})
+  end
+
   def list(pid) do
     GenServer.call(pid, :list)
   end
@@ -23,12 +36,34 @@ defmodule EdenGarden.BasketServer do
 
   def init([role]) do
     IO.puts("[Basket: #{role}] Criamos uma cesta #{role}")
+    Process.flag(:trap_exit, true)
     Process.send_after(self(), :periodic_task, random_interval())
     {:ok, %{role: role, load: []}}
   end
 
   def handle_call(:list, _from, state) do
     {:reply, state, state}
+  end
+
+  def handle_call({:transfer, transfered}, _from, %{load: load, role: role} = state) do
+    new_load = load ++ transfered
+    IO.puts("[Basket: #{role}] Nova carga: #{length(new_load)} frutas")
+    {:reply, :ok, %{state | load: new_load}}
+  end
+
+  def handle_info({:EXIT, _from, :shutdown}, %{load: load, role: "main"} = state) do
+    IO.puts("[Basket: main] Encerrando a cesta")
+    transfer(:global.whereis_name("Elixir.EdenGarden.BasketServer.Backup"), load, "main")
+    Process.flag(:trap_exit, false)
+    Process.exit(self(), :normal)
+    {:noreply, state}
+  end
+
+  def handle_info({:EXIT, _from, :shutdown}, %{role: "backup"} = state) do
+    IO.puts("[Basket: backup] Encerrando a cesta")
+    Process.flag(:trap_exit, false)
+    Process.exit(self(), :normal)
+    {:noreply, state}
   end
 
   def handle_info(:periodic_task, state) do
@@ -50,9 +85,22 @@ defmodule EdenGarden.BasketServer do
     end
   end
 
-  defp handle_periodic_task(%{role: "backup"} = state) do
-    IO.puts("[Basket: backup] Backup fica na reserva...")
-    state
+  defp handle_periodic_task(%{load: load, role: "backup"} = state) do
+    case load do
+      [] ->
+        IO.puts("[Basket: backup] Backup fica na reserva...")
+        state
+
+      load ->
+        IO.puts("[Basket: backup] Transferindo de volta para o principal...")
+
+        if is_online("BasketServer.Main") do
+          transfer(:global.whereis_name("Elixir.EdenGarden.BasketServer.Main"), load, "backup")
+          %{state | load: []}
+        else
+          state
+        end
+    end
   end
 
   defp random_interval do
