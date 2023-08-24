@@ -14,6 +14,10 @@ defmodule EdenGarden.Application do
       Supervisor.child_spec({EdenGarden.TreeServer, "laranja"}, id: Laranjeira),
       # Bananeira
       Supervisor.child_spec({EdenGarden.TreeServer, "banana"}, id: Bananeira),
+      # Basket main
+      Supervisor.child_spec({EdenGarden.BasketServer, "main"}, id: MainBasket),
+      # Basket backup
+      Supervisor.child_spec({EdenGarden.BasketServer, "backup"}, id: BackupBasket),
       # Start the Telemetry supervisor
       EdenGardenWeb.Telemetry,
       # Start the Ecto repository

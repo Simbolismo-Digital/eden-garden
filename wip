@@ -45,3 +45,13 @@ Process.exit(:global.whereis_name("Elixir.EdenGarden.TreeServer.Macieira"), :shu
 Process.exit(:global.whereis_name("Elixir.EdenGarden.TreeServer.Laranjeira"), :shutdown)
 Process.exit(:global.whereis_name("Elixir.EdenGarden.TreeServer.Bananeira"), :shutdown)
 ```
+
+[create and registered BasketServer]
+```
+iex --sname fruits -S mix phx.server
+iex --sname basket
+Node.connect(:"fruits@davi-dragon")
+EdenGarden.BasketServer.list(:global.whereis_name("Elixir.EdenGarden.BasketServer.Main"))
+Process.exit(:global.whereis_name("Elixir.EdenGarden.BasketServer.Main"), :shutdown)
+Process.exit(:global.whereis_name("Elixir.EdenGarden.BasketServer.Backup"), :shutdown)
+```
