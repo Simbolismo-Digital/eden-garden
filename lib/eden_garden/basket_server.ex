@@ -10,8 +10,12 @@ defmodule EdenGarden.BasketServer do
   @period 1
 
   def start_link(role) do
-    GenServer.start_link(__MODULE__, [role], name: {:global, @names[role]})
+    GenServer.start_link(__MODULE__, [role], name: via_tuple(@names[role]))
   end
+
+  # Horde
+
+  def via_tuple(name), do: {:via, Horde.Registry, {EdenGarden.HordeRegistry, name}}
 
   # Api
 

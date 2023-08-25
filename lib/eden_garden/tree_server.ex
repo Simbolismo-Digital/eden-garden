@@ -2,17 +2,19 @@ defmodule EdenGarden.TreeServer do
   use GenServer
 
   @names %{
-    "maçã" => "#{__MODULE__}.Macieira",
-    "laranja" => "#{__MODULE__}.Laranjeira",
-    "banana" => "#{__MODULE__}.Bananeira"
+    "maçã" => "EdenGarden.TreeServer.Macieira",
+    "laranja" => "EdenGarden.TreeServer.Laranjeira",
+    "banana" => "EdenGarden.TreeServer.Bananeira"
   }
 
-  # seconds
-  @period Enum.random(2..5)
-
+  @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(fruit) do
-    GenServer.start_link(__MODULE__, [fruit], name: {:global, @names[fruit]})
+    GenServer.start_link(__MODULE__, [fruit], name: via_tuple(@names[fruit]))
   end
+
+  # Horde
+
+  def via_tuple(name), do: {:via, Horde.Registry, {EdenGarden.HordeRegistry, name}}
 
   # Api
 
@@ -28,6 +30,7 @@ defmodule EdenGarden.TreeServer do
 
   def init([fruit]) do
     IO.puts("[Tree: #{fruit}] Criamos uma árvore de #{fruit}s")
+    # Process.flag(:trap_exit, true)
     Process.send_after(self(), :periodic_task, random_interval())
     {:ok, %{fruit: fruit, load: []}}
   end
@@ -48,6 +51,11 @@ defmodule EdenGarden.TreeServer do
     {:reply, state, state}
   end
 
+  # def handle_info({:EXIT, _from, {:name_conflict, _, _, _}}, %{fruit: fruit} = state) do
+  #   IO.puts("[Tree: #{fruit}]: processo iniciado em outro nodo, por favor se retire")
+  #   {:stop, :normal, state}
+  # end
+
   def handle_info(:periodic_task, state) do
     Process.send_after(self(), :periodic_task, random_interval())
     new_state = handle_periodic_task(state)
@@ -61,6 +69,6 @@ defmodule EdenGarden.TreeServer do
   end
 
   defp random_interval do
-    :timer.seconds(@period)
+    :timer.seconds(Enum.random(2..5))
   end
 end

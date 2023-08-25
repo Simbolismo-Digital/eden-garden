@@ -116,3 +116,66 @@ $ Node.list
 ```
 
 observação: para estratégias com kubernetes você pode checar o [tutorial](https://www.poeticoding.com/connecting-elixir-nodes-with-libcluster-locally-and-on-kubernetes/)
+
+
+[setup a distributed cluster with Horde](https://hexdocs.pm/horde/readme.html)
+* [Getting Started](https://hexdocs.pm/horde/getting_started.html)
+* [Setting up a Cluster](https://hexdocs.pm/horde/libcluster.html)
+* [Eventual consistency](https://hexdocs.pm/horde/eventual_consistency.html)
+
+```
+# mix.exs
+defp deps do
+  [
+    ...
+    {:horde, "~> 0.8.7"}
+  ]
+end
+```
+
+```
+# application.ex
+defmodule EdenGarden.Application do
+  use Application
+
+  def start(_type, _args) do
+    ...
+    children = [
+      ...
+      {Horde.Registry, [name: EdenGarden.HordeRegistry, keys: :unique]},
+      {Horde.DynamicSupervisor, [name: EdenGarden.HordeSupervisor, strategy: :one_for_one]}
+    ]
+    opts = [strategy: :one_for_one, name: EdenGarden.Supervisor]
+    link = Supervisor.start_link(children, opts)
+    horde_start_links()
+    link
+  end
+end
+```
+
+```
+# application.ex
+  def horde_start_links() do
+    # Macieira
+    Horde.DynamicSupervisor.start_child(EdenGarden.HordeSupervisor,
+      %{
+        id: "EdenGarden.TreeServer.Macieira",
+        type: :supervisor,
+        start: {EdenGarden.TreeServer, :start_link, ["maçã"]}
+      })
+    ...
+  end
+```
+
+```
+# Node A
+$ PORT=4000 iex --sname a -S mix phx.server
+[{pid, nil}] = Horde.Registry.lookup(EdenGarden.HordeRegistry, "EdenGarden.TreeServer.Macieira")
+Process.exit(pid, :kill)
+
+# Node B
+$ iex --sname b -S mix
+Horde.Registry.lookup(EdenGarden.HordeRegistry, "EdenGarden.TreeServer.Bananeira")
+
+$ iex --sname c -S mix
+```

@@ -50,7 +50,8 @@ defmodule EdenGarden.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      {:libcluster, "~> 3.3"}
+      {:libcluster, "~> 3.3"},
+      {:horde, "~> 0.8.7"}
     ]
   end
 

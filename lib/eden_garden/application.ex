@@ -14,16 +14,6 @@ defmodule EdenGarden.Application do
     ]
 
     children = [
-      # Macieira
-      Supervisor.child_spec({EdenGarden.TreeServer, "maçã"}, id: Macieira),
-      # Laranjeira
-      Supervisor.child_spec({EdenGarden.TreeServer, "laranja"}, id: Laranjeira),
-      # Bananeira
-      Supervisor.child_spec({EdenGarden.TreeServer, "banana"}, id: Bananeira),
-      # Basket main
-      Supervisor.child_spec({EdenGarden.BasketServer, "main"}, id: MainBasket),
-      # Basket backup
-      Supervisor.child_spec({EdenGarden.BasketServer, "backup"}, id: BackupBasket),
       # Start the Telemetry supervisor
       EdenGardenWeb.Telemetry,
       # Start the Ecto repository
@@ -34,7 +24,10 @@ defmodule EdenGarden.Application do
       {Finch, name: EdenGarden.Finch},
       # Start the Endpoint (http/https)
       {Cluster.Supervisor, [topologies, [name: EdenGarden.ClusterSupervisor]]},
-      EdenGardenWeb.Endpoint
+      EdenGardenWeb.Endpoint,
+      {Horde.Registry, [name: EdenGarden.HordeRegistry, keys: :unique]},
+      {Horde.DynamicSupervisor, [name: EdenGarden.HordeSupervisor, strategy: :one_for_one, process_redistribution: :active]},
+      EdenGarden.NodeListener
       # Start a worker by calling: EdenGarden.Worker.start_link(arg)
       # {EdenGarden.Worker, arg}
     ]
@@ -42,7 +35,40 @@ defmodule EdenGarden.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: EdenGarden.Supervisor]
-    Supervisor.start_link(children, opts)
+    link = Supervisor.start_link(children, opts)
+    horde_start_links()
+    link
+  end
+
+  defp horde_start_links() do
+    # Macieira
+    Horde.DynamicSupervisor.start_child(EdenGarden.HordeSupervisor,
+      %{
+        id: "EdenGarden.TreeServer.Macieira",
+        type: :worker,
+        restart: :transient,
+        start: {EdenGarden.TreeServer, :start_link, ["maçã"]}
+      })
+    # Laranjeira
+    Horde.DynamicSupervisor.start_child(EdenGarden.HordeSupervisor,
+      %{
+        id: "EdenGarden.TreeServer.Laranjeira",
+        type: :worker,
+        restart: :transient,
+        start: {EdenGarden.TreeServer, :start_link, ["laranja"]}
+      })
+    # Bananeira
+    Horde.DynamicSupervisor.start_child(EdenGarden.HordeSupervisor,
+      %{
+        id: "EdenGarden.TreeServer.Bananeira",
+        type: :worker,
+        restart: :transient,
+        start: {EdenGarden.TreeServer, :start_link, ["banana"]}
+      })
+    # # Basket main
+    # Horde.DynamicSupervisor.start_child(EdenGarden.HordeSupervisor, Horde.DynamicSupervisor.child_spec({EdenGarden.BasketServer, "main"}))
+    # # Basket backup
+    # Horde.DynamicSupervisor.start_child(EdenGarden.HordeSupervisor, Horde.DynamicSupervisor.child_spec({EdenGarden.BasketServer, "backup"}))
   end
 
   # Tell Phoenix to update the endpoint configuration
