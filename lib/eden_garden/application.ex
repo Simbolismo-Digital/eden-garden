@@ -7,6 +7,12 @@ defmodule EdenGarden.Application do
 
   @impl true
   def start(_type, _args) do
+    topologies = [
+      eden_garden: [
+        strategy: Cluster.Strategy.Gossip
+      ]
+    ]
+
     children = [
       # Macieira
       Supervisor.child_spec({EdenGarden.TreeServer, "maçã"}, id: Macieira),
@@ -27,6 +33,7 @@ defmodule EdenGarden.Application do
       # Start Finch
       {Finch, name: EdenGarden.Finch},
       # Start the Endpoint (http/https)
+      {Cluster.Supervisor, [topologies, [name: EdenGarden.ClusterSupervisor]]},
       EdenGardenWeb.Endpoint
       # Start a worker by calling: EdenGarden.Worker.start_link(arg)
       # {EdenGarden.Worker, arg}

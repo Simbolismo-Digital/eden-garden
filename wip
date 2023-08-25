@@ -67,3 +67,52 @@ iex --sname basket
 Node.connect(:"fruits@davi-dragon")
 Process.exit(:global.whereis_name("Elixir.EdenGarden.BasketServer.Main"), :shutdown)
 ```
+
+[cluster formation with libcluster gossip](https://github.com/bitwalker/libcluster)
+
+```
+# mix.exs
+defp deps do
+  [
+    ...
+    {:libcluster, "~> 3.3"}
+  ]
+end
+```
+
+```
+# application.ex
+defmodule EdenGarden.Application do
+  use Application
+
+  def start(_type, _args) do
+    topologies = [
+      chat: [
+        strategy: Cluster.Strategy.Gossip
+      ]
+    ]
+
+    children = [
+      ...
+      {Cluster.Supervisor, [topologies, [name: EdenGarden.ClusterSupervisor]]},
+      EdenGardenWeb.Endpoint
+    ]
+    opts = [strategy: :one_for_one, name: EdenGarden.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+end
+```
+
+```
+# Node A
+$ PORT=4000 iex --sname a -S mix phx.server
+# Node B
+$ iex --sname b -S mix
+# Node C
+$ iex --sname c -S mix
+# Em qualquer nodo você pode rodar
+$ Node.list
+> [:"a@davi-dragon", :"b@davi-dragon"]
+```
+
+observação: para estratégias com kubernetes você pode checar o [tutorial](https://www.poeticoding.com/connecting-elixir-nodes-with-libcluster-locally-and-on-kubernetes/)
